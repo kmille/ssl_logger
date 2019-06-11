@@ -54,79 +54,75 @@ _FRIDA_SCRIPT = """
   /**
    * Initializes 'addresses' dictionary and NativeFunctions.
    */
-  function initializeGlobals()
+  var addresses = {};
+  
+  var resolver = new ApiResolver("module");
+  
+  var exps = [
+    ["*libssl*",
+      ["SSL_read", "SSL_write", "SSL_get_fd", "SSL_get_session",
+       "SSL_SESSION_get_id"]],
+    [Process.platform == "darwin" ? "*libsystem*" : "*libc*",
+      ["getpeername", "getsockname", "ntohs", "ntohl"]]
+    ];
+  for (var i = 0; i < exps.length; i++)
   {
-    addresses = {};
-
-    var resolver = new ApiResolver("module");
-
-    var exps = [
-      ["*libssl*",
-        ["SSL_read", "SSL_write", "SSL_get_fd", "SSL_get_session",
-        "SSL_SESSION_get_id"]],
-      [Process.platform == "darwin" ? "*libsystem*" : "*libc*",
-        ["getpeername", "getsockname", "ntohs", "ntohl"]]
-      ];
-    for (var i = 0; i < exps.length; i++)
+    var lib = exps[i][0];
+    var names = exps[i][1];
+  
+    for (var j = 0; j < names.length; j++)
     {
-      var lib = exps[i][0];
-      var names = exps[i][1];
-
-      for (var j = 0; j < names.length; j++)
+      var name = names[j];
+      var matches = resolver.enumerateMatchesSync("exports:" + lib + "!" +
+        name);
+      if (matches.length == 0)
       {
-        var name = names[j];
-        var matches = resolver.enumerateMatchesSync("exports:" + lib + "!" +
-          name);
-        if (matches.length == 0)
-        {
-          throw "Could not find " + lib + "!" + name;
-        }
-        else if (matches.length != 1)
-        {
-          // Sometimes Frida returns duplicates.
-          var address = 0;
-          var s = "";
-          var duplicates_only = true;
-          for (var k = 0; k < matches.length; k++)
-          {
-            if (s.length != 0)
-            {
-              s += ", ";
-            }
-            s += matches[k].name + "@" + matches[k].address;
-            if (address == 0)
-            {
-              address = matches[k].address;
-            }
-            else if (!address.equals(matches[k].address))
-            {
-              duplicates_only = false;
-            }
-          }
-          if (!duplicates_only)
-          {
-            throw "More than one match found for " + lib + "!" + name + ": " +
-              s;
-          }
-        }
-        addresses[name] = matches[0].address;
+        throw "Could not find " + lib + "!" + name;
       }
+      else if (matches.length != 1)
+      {
+        // Sometimes Frida returns duplicates.
+        var address = 0;
+        var s = "";
+        var duplicates_only = true;
+        for (var k = 0; k < matches.length; k++)
+        {
+          if (s.length != 0)
+          {
+            s += ", ";
+          }
+          s += matches[k].name + "@" + matches[k].address;
+          if (address == 0)
+          {
+            address = matches[k].address;
+          }
+          else if (!address.equals(matches[k].address))
+          {
+            duplicates_only = false;
+          }
+        }
+        if (!duplicates_only)
+        {
+          throw "More than one match found for " + lib + "!" + name + ": " +
+            s;
+        }
+      }
+      addresses[name] = matches[0].address;
     }
-
-    SSL_get_fd = new NativeFunction(addresses["SSL_get_fd"], "int",
-      ["pointer"]);
-    SSL_get_session = new NativeFunction(addresses["SSL_get_session"],
-      "pointer", ["pointer"]);
-    SSL_SESSION_get_id = new NativeFunction(addresses["SSL_SESSION_get_id"],
-      "pointer", ["pointer", "pointer"]);
-    getpeername = new NativeFunction(addresses["getpeername"], "int", ["int",
-      "pointer", "pointer"]);
-    getsockname = new NativeFunction(addresses["getsockname"], "int", ["int",
-      "pointer", "pointer"]);
-    ntohs = new NativeFunction(addresses["ntohs"], "uint16", ["uint16"]);
-    ntohl = new NativeFunction(addresses["ntohl"], "uint32", ["uint32"]);
   }
-  initializeGlobals();
+    
+  var SSL_get_fd = new NativeFunction(addresses["SSL_get_fd"], "int",
+    ["pointer"]);
+  var SSL_get_session = new NativeFunction(addresses["SSL_get_session"],
+    "pointer", ["pointer"]);
+  var SSL_SESSION_get_id = new NativeFunction(addresses["SSL_SESSION_get_id"],
+    "pointer", ["pointer", "pointer"]);
+  var getpeername = new NativeFunction(addresses["getpeername"], "int", ["int",
+    "pointer", "pointer"]);
+  var getsockname = new NativeFunction(addresses["getsockname"], "int", ["int",
+    "pointer", "pointer"]);
+  var ntohs = new NativeFunction(addresses["ntohs"], "uint16", ["uint16"]);
+  var ntohl = new NativeFunction(addresses["ntohl"], "uint32", ["uint32"]);
 
   /**
    * Returns a dictionary of a sockfd's "src_addr", "src_port", "dst_addr", and
