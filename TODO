@@ -1,0 +1,28 @@
+https://github.com/onetom/ssl_logger
+https://github.com/CherryDT/ssl_logger Windows
+https://github.com/rgov/ssl_logger
+all in one commit "fix some bugs": https://github.com/google/ssl_logger/compare/master...strazzere:ssl_logger:master
+
+https://awakened1712.github.io/hacking/hacking-frida/
+
+FEAUTRES
+- print nicely
+- wait => spawn new process: https://awakened1712.github.io/hacking/hacking-frida/
+- android support (remote)
+- use builtin
+- filter port?
+- replace? https://github.com/google/ssl_logger/commit/31a00579a76caba1f140e3bf5fa94c29141fbf74
+	+ ist colored
+- gzip decode
+- hexdump
+- outgoing only
+- wie beenden?
+- log to file
+- argument parsing gescheit machen
+- attach multiple processes
+
+- spawn gating (follow childs): https://github.com/frida/frida/issues/602
+
+
+BUGS:
+- pcap: src and dst ip is 0.0.0.0 => ah ist bei ipv6 kaputt
